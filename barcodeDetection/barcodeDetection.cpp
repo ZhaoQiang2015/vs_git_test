@@ -65,7 +65,10 @@ void getFiles(string path, vector<string>& files)
 	}
 }
 
-//旋转图像内容不变，尺寸相应变大
+
+/************************************************************************/
+/* 旋转图像内容不变，尺寸相应变大                                          */
+/************************************************************************/
 IplImage* rotateImage2(IplImage* img, int degree)
 {
 	double angle = degree  * CV_PI / 180.;
@@ -105,8 +108,10 @@ IplImage* rotateImage2(IplImage* img, int degree)
 	return img_rotate;
 }
 
-
-//旋转图像内容不变，尺寸相应变大  
+ 
+/************************************************************************/
+/* 旋转图像内容不变，尺寸相应变大                                          */
+/************************************************************************/
 IplImage* rotateImage1(IplImage* img, int degree){
 	double angle = degree  * CV_PI / 180.; // 弧度    
 	double a = sin(angle), b = cos(angle);
@@ -132,7 +137,6 @@ IplImage* rotateImage1(IplImage* img, int degree){
 	cvWarpAffine(img, img_rotate, &map_matrix, CV_INTER_LINEAR | CV_WARP_FILL_OUTLIERS, cvScalarAll(0));
 	return img_rotate;
 }
-
 
 
 /************************************************************************/
@@ -185,6 +189,7 @@ int rgb2hsi(Mat &image, Mat &hsi){
 	}
 	return 0;
 }
+
 
 /************************************************************************/
 /*    色彩空间转换                                                       */
@@ -259,6 +264,22 @@ Mat get_histogram(Mat image, int hist_type)
 }
 
 
+/************************************************************************/
+/* 反转灰度图像                                                          */
+/************************************************************************/
+Mat reverseImage(Mat image)
+{
+	for (int i = 0; i < image.cols; i++)
+	{
+		for (int j = 0; j < image.rows; j++)
+		{
+			image.at<Vec3b>(j, i)[0] = 255 - image.at<Vec3b>(j, i)[0];
+			image.at<Vec3b>(j, i)[1] = 255 - image.at<Vec3b>(j, i)[1];
+			image.at<Vec3b>(j, i)[2] = 255 - image.at<Vec3b>(j, i)[2];
+		}
+	}
+	return image;
+}
 /***********************************************************************************\
 *                                main函数                                           *
 \***********************************************************************************/
@@ -278,16 +299,18 @@ int main(int argc, char* argv[])
 	char str[80];
 	int size = files.size();
 
-	//for (int i = 0; i < size; i++)
-	//{
-	//	cout << files[i].c_str() << endl;
-	//}
 
 	Mat src;
+	//定义反转图像
+	Mat inverseImg = src.clone();
+	inverseImg = reverseImage(inverseImg);
 
+	//遍历图像进行
 	for (int i = 0; i < 10; ++i)
 	{
 		src = imread(files[i].c_str());
+
+
 
 		//样本图像宽高
 		Size src_size = src.size();
@@ -317,8 +340,9 @@ int main(int argc, char* argv[])
 		//转化为灰度图
 		Mat textImg;
 		cvtColor(src, textImg, CV_BGR2GRAY);
-
-
+		Mat reverImg;
+		cvtColor(inverseImg, reverImg, CV_BGR2GRAY);
+		//imshow("reverseImg", reverImg);
 		//创建MSER类同时确定各个参数
 		Ptr<MSER> ms = MSER::create(10, 30, 14400, 0.25, 0.2);
 		//Ptr<MSER> ms = MSER::create(7, 20, 14400, 0.25, 0.2, 200, 1.01, 0.003, 5);
@@ -327,7 +351,7 @@ int main(int argc, char* argv[])
 		vector<vector<Point> > regions;
 		vector<Rect> bboxes;
 
-		ms->detectRegions(textImg, regions, bboxes);
+		ms->detectRegions(reverImg, regions, bboxes);
 		//ms->detectRegions(src, regions, bboxes);
 
 		//创建RotatedRect对象,存储拟合的矩形
